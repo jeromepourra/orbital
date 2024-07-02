@@ -20,7 +20,9 @@
             </div>
         </header>
         <main>
-            <div id="view"></div>
+            <div id="view">
+                <canvas></canvas>
+            </div>
         </main>
         <footer>
             <p>Jérôme Pourra - Orbital - <?= date("Y") ?></p>

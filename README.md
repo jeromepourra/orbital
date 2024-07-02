@@ -7,13 +7,12 @@
 
 ```bash
 npm install
-npx tsc
 ```
 
 ## Run project
 
 ```bash
-php -S localhost:8080
+npm run start
 ```
 
 Se rendre sur l'adresse http://localhost:8080
