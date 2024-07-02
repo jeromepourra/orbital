@@ -2,7 +2,7 @@ import { ViewPoint } from "./View.js";
 
 console.log("Hello World!");
 
-let viewElement = document.querySelector("#view") as HTMLElement;
+let viewElement = document.querySelector("#view") as HTMLDivElement;
 let view = new ViewPoint(0, 0, viewElement);
 let canMove = false;
 
@@ -18,7 +18,7 @@ window.addEventListener("mouseup", (event: MouseEvent) => {
 
 window.addEventListener("mousemove", (event: MouseEvent) => {
     if (canMove) {
-        view.onMove(0 - event.movementX, 0 - event.movementY);
+        view.onMove(event.movementX, event.movementY);
     }
 });
 

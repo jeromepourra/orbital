@@ -1,3 +1,5 @@
+import { Canvas } from "./Canvas.js";
+
 export class ViewPoint {
 
     private x: number;
@@ -10,55 +12,76 @@ export class ViewPoint {
     private left: number;
     private bottom: number;
     private right: number;
-    private element: HTMLElement;
-    private rectElement: DOMRect;
+    private element: HTMLDivElement;
+    private canvas: Canvas;
 
-    constructor(x: number = 0, y: number = 0, element: HTMLElement) {
+    constructor(x: number = 0, y: number = 0, element: HTMLDivElement) {
+
+        let sizesElement = element.getBoundingClientRect();
+
+        this.updateDot(x, y);
+        this.updateSizes(sizesElement.width, sizesElement.height);
+        this.updateArea();
 
         this.element = element;
-        this.rectElement = this.element.getBoundingClientRect();
+        this.canvas = new Canvas(this.element.querySelector("canvas") as HTMLCanvasElement, this.width, this.height);
 
-        this.x = x;
-        this.y = y;
-
-        this.width = this.rectElement.width;
-        this.height = this.rectElement.height;
-
-        this.halfWidth = this.width / 2;
-        this.halfHeight = this.height / 2;
-
-        this.top = this.y - this.halfHeight;
-        this.left = this.x - this.halfWidth;
-        this.bottom = this.y + this.halfHeight;
-        this.right = this.x + this.halfWidth;
+        requestAnimationFrame(() => {
+            this.canvas.clear();
+            this.canvas.drawGrid(this.x, this.y, 25);
+        });
 
         console.log("Initialize", this);
         
     }
 
     public onMove(shiftX: number, shiftY: number): void {
-        this.x += shiftX;
-        this.y += shiftY;
-        console.log("Move: ", { x: this.x, y: this.y});
+        this.updateDot(this.x + shiftX, this.y + shiftY);
+        this.updateArea();
+
+        requestAnimationFrame(() => {
+            this.canvas.clear();
+            this.canvas.drawGrid(this.x, this.y, 25);
+        });
+
+        console.log("Move:", this);
     }
 
     public onResize(): void {
 
-        this.rectElement = this.element.getBoundingClientRect();
+        let sizesElement = this.element.getBoundingClientRect();
 
-        this.width = this.rectElement.width;
-        this.height = this.rectElement.height;
+        this.updateSizes(sizesElement.width, sizesElement.height);
+        this.updateArea();
 
-        this.halfWidth = this.width / 2;
-        this.halfHeight = this.height / 2;
+        this.canvas.resize(this.width, this.height);
 
+        requestAnimationFrame(() => {
+            this.canvas.clear();
+            this.canvas.drawGrid(this.x, this.y, 25);
+        });
+
+        console.log("Resize", this);
+
+    }
+
+    private updateDot(x: number, y: number): void {
+        this.x = x;
+        this.y = y;
+    }
+
+    private updateArea(): void {
         this.top = this.y - this.halfHeight;
         this.left = this.x - this.halfWidth;
         this.bottom = this.y + this.halfHeight;
         this.right = this.x + this.halfWidth;
+    }
 
-        console.log("Resize", this);
-
+    private updateSizes(width: number, height: number): void {
+        this.width = width;
+        this.height = height;
+        this.halfWidth = this.width / 2;
+        this.halfHeight = this.height / 2;
     }
 
 }
