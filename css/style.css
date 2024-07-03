@@ -98,13 +98,9 @@ footer p {
     background-color: white;
     overflow: hidden;
     cursor: grab;
+    position: relative;
 }
 
 #view:active {
     cursor: grabbing;
-}
-
-#view canvas {
-    width: 100%;
-    height: 100%;
 }
