@@ -3,15 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && php -S localhost:8080",
-    "dev": "concurrently \"php -S localhost:8080\" \"tsc -w\""
+    "start": "tsc && php -S localhost:8080"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "concurrently": "^8.2.2",
     "typescript": "^5.5.3"
   }
 }
