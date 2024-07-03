@@ -104,3 +104,8 @@ footer p {
 #view:active {
     cursor: grabbing;
 }
+
+#view canvas {
+    width: 100%;
+    height: 100%;
+}

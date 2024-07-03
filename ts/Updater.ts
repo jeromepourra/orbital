@@ -19,9 +19,9 @@ export class Updater extends Singleton<Updater> {
         return this;
     }
 
-    public add(callback: Function): this {
+    public add(callback: Function): Function {
         this.stack.push(callback);
-        return this;
+        return callback;
     }
 
     public remove(callback: Function): this {
@@ -31,8 +31,9 @@ export class Updater extends Singleton<Updater> {
 
     private update(): void {
         requestAnimationFrame(() => {
-            this.stack.forEach((callback) => {
+            this.stack.forEach((callback, index) => {
                 callback();
+                this.stack.splice(index, 1);
             });
             this.update();
         });
