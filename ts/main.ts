@@ -1,8 +1,13 @@
+import { Updater } from "./Updater.js";
 import { View } from "./View.js";
 
 let viewElement = document.querySelector("#view") as HTMLDivElement;
 let view = new View(0, 0, viewElement);
 let canMove = false;
+
+let instance = Updater.getInstance();
+console.log(instance);
+
 
 viewElement.addEventListener("mousedown", (event: MouseEvent) => {
     canMove = true;
