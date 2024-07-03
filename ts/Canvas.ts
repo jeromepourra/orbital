@@ -1,3 +1,10 @@
+export type TCanvasTextOptions = {
+    fontSize?: number;
+    fontFamily?: string;
+    color?: string;
+    center?: boolean;
+};
+
 export class Canvas {
 
     private element: HTMLCanvasElement;
@@ -46,17 +53,28 @@ export class Canvas {
         this.context.closePath();
     }
 
-    public drawText(text: string, x: number, y: number, color: string = 'black'): void {
-        this.context.textAlign = 'center';
-        this.context.textBaseline = 'middle';
-        this.context.fillStyle = color;
-        this.context.fillText(text, x, y);
-    }
+    public drawText(text: string, x: number, y: number, options?: TCanvasTextOptions): void {
+        
+        if (options) {
 
-    public drawTextCenter(text: string, x: number, y: number, color: string = 'black'): void {
-        this.context.textAlign = 'center';
-        this.context.textBaseline = 'middle';
-        this.drawText(text, x, y, color);
+            if (options.center) {
+                this.context.textAlign = 'center';
+                this.context.textBaseline = 'middle';
+            }
+
+            if (options.fontFamily) {
+                this.context.font = `${this.context.font} ${options.fontFamily}`;
+            } else if (options.fontSize) {
+                this.context.font = `${options.fontSize}px monospace`;
+            }
+
+            if (options.color) {
+                this.context.fillStyle = options.color;
+            }
+
+        }
+
+        this.context.fillText(text, x, y);
     }
 
 }
