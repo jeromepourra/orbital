@@ -1,9 +1,7 @@
-import { ViewPoint } from "./View.js";
-
-console.log("Hello World!");
+import { View } from "./View.js";
 
 let viewElement = document.querySelector("#view") as HTMLDivElement;
-let view = new ViewPoint(0, 0, viewElement);
+let view = new View(0, 0, viewElement);
 let canMove = false;
 
 viewElement.addEventListener("mousedown", (event: MouseEvent) => {
