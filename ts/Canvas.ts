@@ -12,10 +12,12 @@ export class Canvas {
     }
 
     public updateSizes(width: number, height: number): void {
-        this.width = width;
-        this.height = height;
-        this.element.width = this.width;
-        this.element.height = this.height;
+        if (this.width !== width || this.height === height) {
+            this.width = width;
+            this.height = height;
+            this.element.width = this.width;
+            this.element.height = this.height;
+        }
     }
 
     public clear(): void {

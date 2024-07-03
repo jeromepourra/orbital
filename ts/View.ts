@@ -1,23 +1,23 @@
 import { Canvas } from "./Canvas.js";
-
-export type ViewProperties = {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    halfWidth: number;
-    halfHeight: number;
-    top: number;
-    left: number;
-    bottom: number;
-    right: number;
-    element: HTMLElement;
-};
+import { Updater } from "./Updater.js";
 
 export class View {
 
+
+    private static readonly INITIAL_X: number = 0;
+    private static readonly INITIAL_Y: number = 0;
+    private static readonly INITIAL_ZOOM: number = 1;
+    private static readonly INITIAL_GRID_CELL_SIZE: number = 50;
+
+    private static readonly ZOOM_FACTOR: number = 0.1;
+    private static readonly ZOOM_MAX: number = 3;
+    private static readonly ZOOM_MIN: number = 0.5;
+
     private x: number;
     private y: number;
+    private zoom: number;
+    private widthBase: number;
+    private heightBase: number;
     private width: number;
     private height: number;
     private halfWidth: number;
@@ -29,75 +29,101 @@ export class View {
     private element: HTMLDivElement;
     private canvas: Canvas;
 
-    constructor(x: number = 0, y: number = 0, element: HTMLDivElement) {
+    constructor(element: HTMLDivElement, x?: number, y?: number, zoom?: number) {
 
         let sizesElement = element.getBoundingClientRect();
 
-        this.updateCenter(x, y);
-        this.updateSizes(sizesElement.width, sizesElement.height);
-        this.updateArea();
+        this.x = x || View.INITIAL_X;
+        this.y = y || View.INITIAL_Y;
+        this.zoom = zoom || View.INITIAL_ZOOM;
+        this.widthBase = sizesElement.width;
+        this.heightBase = sizesElement.height;
+        this.width = this.widthBase / this.zoom;
+        this.height = this.heightBase / this.zoom;
+        this.halfWidth = this.width / 2;
+        this.halfHeight = this.height / 2;
+
+        this.top = this.y - this.halfHeight;
+        this.left = this.x - this.halfWidth;
+        this.bottom = this.y + this.halfHeight;
+        this.right = this.x + this.halfWidth;
 
         this.element = element;
         this.canvas = new Canvas(this.element.querySelector("canvas") as HTMLCanvasElement, this.width, this.height);
 
-        requestAnimationFrame(() => {
-            this.canvas.clear();
-            this.makeGrid(25);
-        });
+        this.drawCanvas();
 
         console.log("Initialize", this);
         
     }
 
-    public getProperties(): ViewProperties {
-        return {
-            x: this.x,
-            y: this.y,
-            width: this.width,
-            height: this.height,
-            halfWidth: this.halfWidth,
-            halfHeight: this.halfHeight,
-            top: this.top,
-            left: this.left,
-            bottom: this.bottom,
-            right: this.right,
-            element: this.element
-        };
+    public drawCanvas() {
+        this.canvas.updateSizes(this.width, this.height);
+        Updater.getInstance().add(() => {
+            this.canvas.clear();
+            this.makeGrid();
+        });
     }
 
     public onMove(shiftX: number, shiftY: number): void {
-        this.updateCenter(this.x + shiftX, this.y + shiftY);
+
+        let newX = this.x + shiftX / this.zoom;
+        let newY = this.y + shiftY / this.zoom;
+
+        this.updateCenter(newX, newY);
         this.updateArea();
-
-        requestAnimationFrame(() => {
-            this.canvas.clear();
-            this.makeGrid(25);
-        });
-
-        console.log("Move:", this);
+        this.drawCanvas();
+        // console.log("Move:", this);
     }
 
     public onResize(): void {
-
         let sizesElement = this.element.getBoundingClientRect();
-
-        this.updateSizes(sizesElement.width, sizesElement.height);
+        this.updateBaseSizes(sizesElement.width, sizesElement.height);
+        this.updateSizes();
         this.updateArea();
+        this.drawCanvas();
+        // console.log("Resize", this);
+    }
 
-        this.canvas.updateSizes(this.width, this.height);
+    public onZoomIn(factor: number = View.ZOOM_FACTOR): void {
+        let newZoom = this.zoom + factor;
+        if (newZoom > View.ZOOM_MAX) {
+            newZoom = View.ZOOM_MAX;
+        }
+        this.updateZoom(newZoom);
+    }
 
-        requestAnimationFrame(() => {
-            this.canvas.clear();
-            this.makeGrid(25);
-        });
+    public onZoomOut(factor: number = View.ZOOM_FACTOR): void {
+        let newZoom = this.zoom - factor;
+        if (newZoom < View.ZOOM_MIN) {
+            newZoom = View.ZOOM_MIN;
+        }
+        this.updateZoom(newZoom);
+    }
 
-        console.log("Resize", this);
-
+    private updateZoom(zoom: number): void {
+        this.zoom = Math.max(0.1, zoom);
+        console.log("Zoom:", this.zoom, "Sizes:", this.width + ":" + this.height);
+        this.updateSizes();
+        this.updateArea();
+        this.drawCanvas();
     }
 
     private updateCenter(x: number, y: number): void {
         this.x = x;
         this.y = y;
+    }
+
+    private updateBaseSizes(width: number, height: number): void {
+        this.widthBase = width;
+        this.heightBase = height;
+    }
+
+    private updateSizes(): void {
+        this.width = this.widthBase / this.zoom;
+        this.height = this.heightBase / this.zoom;
+        this.halfWidth = this.width / 2;
+        this.halfHeight = this.height / 2;
     }
 
     private updateArea(): void {
@@ -107,15 +133,9 @@ export class View {
         this.right = this.x + this.halfWidth;
     }
 
-    private updateSizes(width: number, height: number): void {
-        this.width = width;
-        this.height = height;
-        this.halfWidth = this.width / 2;
-        this.halfHeight = this.height / 2;
-    }
+    private makeGrid(): void {
 
-    private makeGrid(cellSize: number): void {
-
+        const cellSize = View.INITIAL_GRID_CELL_SIZE;
         const halfCellSize = cellSize / 2;
         const centerX = (this.width / 2) + this.x;
         const centerY = (this.height / 2) + this.y;
