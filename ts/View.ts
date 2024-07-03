@@ -1,4 +1,4 @@
-import { Canvas } from "./Canvas.js";
+import { Canvas, TCanvasTextOptions } from "./Canvas.js";
 import { Updater } from "./Updater.js";
 
 export class View {
@@ -10,8 +10,8 @@ export class View {
     private static readonly INITIAL_GRID_CELL_SIZE: number = 50;
 
     private static readonly ZOOM_FACTOR: number = 0.1;
-    private static readonly ZOOM_MAX: number = 3;
-    private static readonly ZOOM_MIN: number = 0.5;
+    private static readonly ZOOM_MAX: number = 50;
+    private static readonly ZOOM_MIN: number = 0.1;
 
     private x: number;
     private y: number;
@@ -38,8 +38,8 @@ export class View {
         this.zoom = zoom || View.INITIAL_ZOOM;
         this.widthBase = sizesElement.width;
         this.heightBase = sizesElement.height;
-        this.width = this.widthBase / this.zoom;
-        this.height = this.heightBase / this.zoom;
+        this.width = this.widthBase * this.zoom;
+        this.height = this.heightBase * this.zoom;
         this.halfWidth = this.width / 2;
         this.halfHeight = this.height / 2;
 
@@ -54,21 +54,24 @@ export class View {
         this.drawCanvas();
 
         console.log("Initialize", this);
-        
+
     }
 
     public drawCanvas() {
-        this.canvas.updateSizes(this.width, this.height);
         Updater.getInstance().add(() => {
             this.canvas.clear();
             this.makeGrid();
         });
     }
 
+    public updateSizesCanvas() {
+        this.canvas.updateSizes(this.widthBase, this.heightBase);
+    }
+
     public onMove(shiftX: number, shiftY: number): void {
 
-        let newX = this.x + shiftX / this.zoom;
-        let newY = this.y + shiftY / this.zoom;
+        let newX = this.x + shiftX;
+        let newY = this.y + shiftY;
 
         this.updateCenter(newX, newY);
         this.updateArea();
@@ -81,24 +84,21 @@ export class View {
         this.updateBaseSizes(sizesElement.width, sizesElement.height);
         this.updateSizes();
         this.updateArea();
+        this.updateSizesCanvas();
         this.drawCanvas();
         // console.log("Resize", this);
     }
 
     public onZoomIn(factor: number = View.ZOOM_FACTOR): void {
-        let newZoom = this.zoom + factor;
-        if (newZoom > View.ZOOM_MAX) {
-            newZoom = View.ZOOM_MAX;
-        }
-        this.updateZoom(newZoom);
+        let newLogZoom = Math.log(this.zoom) + factor;
+        let newZoom = Math.exp(newLogZoom);
+        this.updateZoom(Math.min(newZoom, View.ZOOM_MAX));
     }
 
     public onZoomOut(factor: number = View.ZOOM_FACTOR): void {
-        let newZoom = this.zoom - factor;
-        if (newZoom < View.ZOOM_MIN) {
-            newZoom = View.ZOOM_MIN;
-        }
-        this.updateZoom(newZoom);
+        let newLogZoom = Math.log(this.zoom) - factor;
+        let newZoom = Math.exp(newLogZoom);
+        this.updateZoom(Math.max(newZoom, View.ZOOM_MIN));
     }
 
     private updateZoom(zoom: number): void {
@@ -120,8 +120,8 @@ export class View {
     }
 
     private updateSizes(): void {
-        this.width = this.widthBase / this.zoom;
-        this.height = this.heightBase / this.zoom;
+        this.width = this.widthBase * this.zoom;
+        this.height = this.heightBase * this.zoom;
         this.halfWidth = this.width / 2;
         this.halfHeight = this.height / 2;
     }
@@ -135,27 +135,32 @@ export class View {
 
     private makeGrid(): void {
 
-        const cellSize = View.INITIAL_GRID_CELL_SIZE;
+        const cellSize = View.INITIAL_GRID_CELL_SIZE * this.zoom;
         const halfCellSize = cellSize / 2;
-        const centerX = (this.width / 2) + this.x;
-        const centerY = (this.height / 2) + this.y;
+        const centerX = (this.widthBase / 2) + this.x;
+        const centerY = (this.heightBase / 2) + this.y;
 
-        for (let x = centerX + halfCellSize; x < this.width; x += cellSize) {
-            this.canvas.drawLine(x, 0, x, this.height);
-            this.canvas.drawTextCenter(Math.round((x - centerX) / cellSize).toString(), x + halfCellSize, centerY);
+        const textOptions: TCanvasTextOptions = {
+            center: true,
+            fontSize: Math.floor(Math.min(14, cellSize / 2))
+        };
+
+        for (let x = centerX + halfCellSize; x < this.widthBase; x += cellSize) {
+            this.canvas.drawLine(x, 0, x, this.heightBase);
+            this.canvas.drawText(Math.ceil((x - centerX) / cellSize).toString(), x + halfCellSize, centerY, textOptions);
         }
         for (let x = centerX - halfCellSize; x > 0; x -= cellSize) {
-            this.canvas.drawLine(x, 0, x, this.height);
-            this.canvas.drawTextCenter(Math.round((x - centerX) / cellSize).toString(), x + halfCellSize, centerY);
+            this.canvas.drawLine(x, 0, x, this.heightBase);
+            this.canvas.drawText(Math.ceil((x - centerX) / cellSize).toString(), x + halfCellSize, centerY, textOptions);
         }
 
-        for (let y = centerY + halfCellSize; y < this.height; y += cellSize) {
-            this.canvas.drawLine(0, y, this.width, y);
-            this.canvas.drawTextCenter(Math.round((y - centerY) / cellSize).toString(), centerX, y + halfCellSize);
+        for (let y = centerY + halfCellSize; y < this.heightBase; y += cellSize) {
+            this.canvas.drawLine(0, y, this.widthBase, y);
+            this.canvas.drawText(Math.ceil((y - centerY) / cellSize).toString(), centerX, y + halfCellSize, textOptions);
         }
         for (let y = centerY - halfCellSize; y > 0; y -= cellSize) {
-            this.canvas.drawLine(0, y, this.width, y);
-            this.canvas.drawTextCenter(Math.round((y - centerY) / cellSize).toString(), centerX, y + halfCellSize);
+            this.canvas.drawLine(0, y, this.widthBase, y);
+            this.canvas.drawText(Math.ceil((y - centerY) / cellSize).toString(), centerX, y + halfCellSize, textOptions);
         }
 
     }
