@@ -80,13 +80,7 @@ export class View {
     }
 
     public onMouseMove(mouseX: number, mouseY: number): void {
-
-        let shiftCenterX = mouseX - this.halfWidthBase;
-        let shiftCenterY = mouseY - this.halfHeightBase;
-
-        let shiftX = (shiftCenterX - this.x) / this.zoom;
-        let shiftY = (shiftCenterY - this.y) / this.zoom;
-        
+        // This is a test method !
     }
 
     public onMove(shiftX: number, shiftY: number): void {
@@ -122,62 +116,35 @@ export class View {
     }
 
     public onZoomIn(mouseX: number, mouseY: number, factor: number): void {
-
         let newLogZoom = Math.log(this.zoom) + factor;
         let newZoom = Math.exp(newLogZoom);
-
-        // let shiftCenterX = mouseX - this.halfWidthBase;
-        // let shiftCenterY = mouseY - this.halfHeightBase;
-
-        // let shiftX = (shiftCenterX - this.x) / this.zoom;
-        // let shiftY = (shiftCenterY - this.y) / this.zoom;
-
-        // console.log(shiftX, shiftY);
-
-        // ====================================================================
-        // La partie du dessus est good !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // ====================================================================
-        
-        // this.updateCenter(shiftX, shiftY);
-
-        // // Coordonnées du point par rapport auquel on veut zoomer (dans le système de coordonnées de la vue)
-        // let pointXInView = this.x;
-        // let pointYInView = this.y;
-
-        // console.log(pointXInView, pointYInView);
-
-
-        // // Appliquer le nouveau zoom
-        // this.zoom = newZoom;
-
-        // // // Mise à jour des dimensions de la vue basée sur le nouveau zoom
-        // // this.halfWidth *= newZoom / Math.exp(newLogZoom - factor);
-        // // this.halfHeight *= newZoom / Math.exp(newLogZoom - factor);
-
-        // // Calculer le déplacement nécessaire pour que le point sous le curseur reste inchangé
-        // let newPointXInView = pointXInView * newZoom / Math.exp(newLogZoom - factor);
-        // let newPointYInView = pointYInView * newZoom / Math.exp(newLogZoom - factor);
-
-        // // Mettre à jour la position de la vue pour appliquer le décalage
-        // this.x += pointXInView - newPointXInView;
-        // this.y += pointYInView - newPointYInView;
-
-        // Mise à jour de la vue ou d'autres éléments nécessaires
-        this.updateZoom(newZoom);
-
+        this.updateZoom(mouseX, mouseY, newZoom);
+        this.drawCanvas();
     }
 
     public onZoomOut(mouseX: number, mouseY: number, factor: number): void {
         let newLogZoom = Math.log(this.zoom) - factor;
         let newZoom = Math.exp(newLogZoom);
-        this.updateZoom(newZoom);
+        this.updateZoom(mouseX, mouseY, newZoom);
+        this.drawCanvas();
     }
 
-    private updateZoom(zoom: number): void {
+    private updateZoom(mouseX: number, mouseY: number, zoom: number): void {
+
+        // Calculate the position of the mouse in the canvas before zoom
+        let preZoomX = mouseX / this.zoom - this.halfWidth + this.x;
+        let preZoomY = mouseY / this.zoom - this.halfHeight + this.y;
+
         this.zoom = Math.max(View.ZOOM_MIN, Math.min(zoom, View.ZOOM_MAX));
         this.updateSizes();
         this.updateArea();
-        this.drawCanvas();
+
+        // Calculate the position of the mouse in the canvas after zoom
+        let postZoomX = mouseX / this.zoom - this.halfWidth;
+        let postZoomY = mouseY / this.zoom - this.halfHeight;
+
+        this.updateCenter(preZoomX - postZoomX, preZoomY - postZoomY);
+
     }
 
     private updateCenter(x: number, y: number): void {
