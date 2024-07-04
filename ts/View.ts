@@ -1,4 +1,5 @@
 import { Canvas, TCanvasTextOptions } from "./Canvas.js";
+import { Particule } from "./Particule.js";
 import { Updater } from "./Updater.js";
 
 export class View {
@@ -31,6 +32,7 @@ export class View {
     private element: HTMLDivElement;
     private elementRect: DOMRect;
     private canvas: Canvas;
+    public particules: Array<Particule> = [];
 
     constructor(element: HTMLDivElement, x?: number, y?: number, zoom?: number) {
 
@@ -63,20 +65,81 @@ export class View {
 
     }
 
+    // GETTERS ===
+    // ===========
+
+    public getX(): number {
+        return this.x;
+    }
+
+    public getY(): number {
+        return this.y;
+    }
+
+    public getZoom(): number {
+        return this.zoom;
+    }
+
+    public getWidthBase(): number {
+        return this.widthBase;
+    }
+
+    public getHeightBase(): number {
+        return this.heightBase;
+    }
+
+    public getHalfWidthBase(): number {
+        return this.halfWidthBase;
+    }
+
+    public getHalfHeightBase(): number {
+        return this.halfHeightBase;
+    }
+
+    public getWidth(): number {
+        return this.width;
+    }
+
+    public getHeight(): number {
+        return this.height;
+    }
+
+    public getHalfWidth(): number {
+        return this.halfWidth;
+    }
+
+    public getHalfHeight(): number {
+        return this.halfHeight;
+    }
+
+    public getTop(): number {
+        return this.top;
+    }
+
+    public getLeft(): number {
+        return this.left;
+    }
+
+    public getBottom(): number {
+        return this.bottom;
+    }
+
+    public getRight(): number {
+        return this.right;
+    }
+
     public getElementRect(): DOMRect {
         return this.elementRect;
     }
 
-    public drawCanvas() {
-        Updater.getInstance().add(() => {
-            this.canvas.clear();
-            this.makeGrid();
-            this.printInfos();
-        });
+    public addParticule(particule: Particule): void {
+        this.particules.push(particule);
     }
 
-    public updateSizesCanvas() {
-        this.canvas.updateSizes(this.widthBase, this.heightBase);
+    public addParticules(particules: Array<Particule>): void {
+        particules.forEach((particule: Particule) => {
+            this.addParticule(particule);
+        });
     }
 
     public onMouseMove(mouseX: number, mouseY: number): void {
@@ -85,8 +148,8 @@ export class View {
 
     public onMove(shiftX: number, shiftY: number): void {
 
-        let newX = this.x - shiftX / this.zoom;
-        let newY = this.y - shiftY / this.zoom;
+        const newX = this.x - shiftX / this.zoom;
+        const newY = this.y - shiftY / this.zoom;
 
         this.updateCenter(newX, newY);
         this.updateArea();
@@ -116,15 +179,15 @@ export class View {
     }
 
     public onZoomIn(mouseX: number, mouseY: number, factor: number): void {
-        let newLogZoom = Math.log(this.zoom) + factor;
-        let newZoom = Math.exp(newLogZoom);
+        const newLogZoom = Math.log(this.zoom) + factor;
+        const newZoom = Math.exp(newLogZoom);
         this.updateZoom(mouseX, mouseY, newZoom);
         this.drawCanvas();
     }
 
     public onZoomOut(mouseX: number, mouseY: number, factor: number): void {
-        let newLogZoom = Math.log(this.zoom) - factor;
-        let newZoom = Math.exp(newLogZoom);
+        const newLogZoom = Math.log(this.zoom) - factor;
+        const newZoom = Math.exp(newLogZoom);
         this.updateZoom(mouseX, mouseY, newZoom);
         this.drawCanvas();
     }
@@ -132,16 +195,16 @@ export class View {
     private updateZoom(mouseX: number, mouseY: number, zoom: number): void {
 
         // Calculate the position of the mouse in the canvas before zoom
-        let preZoomX = mouseX / this.zoom - this.halfWidth + this.x;
-        let preZoomY = mouseY / this.zoom - this.halfHeight + this.y;
+        const preZoomX = mouseX / this.zoom - this.halfWidth + this.x;
+        const preZoomY = mouseY / this.zoom - this.halfHeight + this.y;
 
         this.zoom = Math.max(View.ZOOM_MIN, Math.min(zoom, View.ZOOM_MAX));
         this.updateSizes();
         this.updateArea();
 
         // Calculate the position of the mouse in the canvas after zoom
-        let postZoomX = mouseX / this.zoom - this.halfWidth;
-        let postZoomY = mouseY / this.zoom - this.halfHeight;
+        const postZoomX = mouseX / this.zoom - this.halfWidth;
+        const postZoomY = mouseY / this.zoom - this.halfHeight;
 
         this.updateCenter(preZoomX - postZoomX, preZoomY - postZoomY);
 
@@ -171,6 +234,27 @@ export class View {
         this.left = this.x - this.halfWidth;
         this.bottom = this.y + this.halfHeight;
         this.right = this.x + this.halfWidth;
+    }
+
+    // CANVAS METHODS ===
+    // ==================
+
+    private drawCanvas() {
+        Updater.getInstance().add(() => {
+            this.canvas.clear();
+            this.makeGrid();
+            this.printInfos();
+
+            this.particules.forEach((particule: Particule) => {
+                particule.update();
+                particule.draw(this.canvas);
+            });
+
+        });
+    }
+
+    private updateSizesCanvas() {
+        this.canvas.updateSizes(this.widthBase, this.heightBase);
     }
 
     private makeGrid(): void {
