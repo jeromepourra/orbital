@@ -91,8 +91,8 @@ export class View {
 
     public onMove(shiftX: number, shiftY: number): void {
 
-        let newX = this.x + shiftX;
-        let newY = this.y + shiftY;
+        let newX = this.x - shiftX;
+        let newY = this.y - shiftY;
 
         this.updateCenter(newX, newY);
         this.updateArea();
@@ -201,18 +201,18 @@ export class View {
     }
 
     private updateArea(): void {
-        this.top = -(this.halfHeight + this.y);
-        this.left = -(this.halfWidth + this.x);
-        this.bottom = this.halfHeight - this.y;
-        this.right = this.halfWidth - this.x;
+        this.top = this.y - this.halfHeight;
+        this.left = this.x - this.halfWidth;
+        this.bottom = this.y + this.halfHeight;
+        this.right = this.x + this.halfWidth;
     }
 
     private makeGrid(): void {
 
         const cellSize = View.INITIAL_GRID_CELL_SIZE * this.zoom;
         const halfCellSize = cellSize / 2;
-        const centerX = (this.widthBase / 2) + this.x;
-        const centerY = (this.heightBase / 2) + this.y;
+        const centerX = (this.widthBase / 2) - this.x;
+        const centerY = (this.heightBase / 2) - this.y;
 
         const textOptions: TCanvasTextOptions = {
             align: "center",
