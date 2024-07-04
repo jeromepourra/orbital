@@ -1,15 +1,11 @@
 import { Canvas, TCanvasTextOptions } from "./Canvas.js";
+import { FrameFrequency } from "./frame/FrameFrequency.js";
+import { FrameQueue } from "./frame/FrameQueue.js";
 import { Particule } from "./Particule.js";
-import { Updater } from "./Updater.js";
 
 export class View {
 
-
-    private static readonly INITIAL_X: number = 0;
-    private static readonly INITIAL_Y: number = 0;
-    private static readonly INITIAL_ZOOM: number = 1;
     private static readonly INITIAL_GRID_CELL_SIZE: number = 50;
-
     private static readonly ZOOM_FACTOR: number = 0.1;
     private static readonly ZOOM_MAX: number = 50;
     private static readonly ZOOM_MIN: number = 0.1;
@@ -29,21 +25,16 @@ export class View {
     private left: number;
     private bottom: number;
     private right: number;
-    private element: HTMLDivElement;
-    private elementRect: DOMRect;
     private canvas: Canvas;
-    public particules: Array<Particule> = [];
+    private particules: Array<Particule> = [];
 
-    constructor(element: HTMLDivElement, x?: number, y?: number, zoom?: number) {
+    constructor(x: number, y: number, width: number, height: number, zoom: number, canvas: Canvas) {
 
-        this.element = element;
-        this.elementRect = element.getBoundingClientRect();
-
-        this.x = x || View.INITIAL_X;
-        this.y = y || View.INITIAL_Y;
-        this.zoom = zoom || View.INITIAL_ZOOM;
-        this.widthBase = this.elementRect.width;
-        this.heightBase = this.elementRect.height;
+        this.x = x;
+        this.y = y;
+        this.zoom = zoom;
+        this.widthBase = width;
+        this.heightBase = height;
         this.halfWidthBase = this.widthBase / 2;
         this.halfHeightBase = this.heightBase / 2;
         this.width = this.widthBase / this.zoom;
@@ -56,10 +47,13 @@ export class View {
         this.bottom = this.y + this.halfHeight;
         this.right = this.x + this.halfWidth;
 
-        this.element = element;
-        this.canvas = new Canvas(this.element.querySelector("canvas") as HTMLCanvasElement, this.width, this.height);
+        this.canvas = canvas;
 
-        this.drawCanvas();
+        FrameQueue.getInstance().add(() => {
+            this.canvas.clear();
+            this.makeGrid();
+            this.printInfos();
+        }, FrameFrequency.FOREVER);
 
         // console.log("Initialize", this);
 
@@ -128,8 +122,12 @@ export class View {
         return this.right;
     }
 
-    public getElementRect(): DOMRect {
-        return this.elementRect;
+    public getCanvas(): Canvas {
+        return this.canvas;
+    }
+
+    public getParticules(): Array<Particule> {
+        return this.particules;
     }
 
     public addParticule(particule: Particule): void {
@@ -153,19 +151,16 @@ export class View {
 
         this.updateCenter(newX, newY);
         this.updateArea();
-        this.drawCanvas();
         // console.log("Move:", this);
 
     }
 
-    public onResize(): void {
+    public onResize(width: number, height: number): void {
 
-        this.elementRect = this.element.getBoundingClientRect();
-        this.updateBaseSizes(this.elementRect.width, this.elementRect.height);
+        this.updateBaseSizes(width, height);
         this.updateSizes();
         this.updateArea();
         this.updateSizesCanvas();
-        this.drawCanvas();
         // console.log("Resize", this);
 
     }
@@ -182,14 +177,12 @@ export class View {
         const newLogZoom = Math.log(this.zoom) + factor;
         const newZoom = Math.exp(newLogZoom);
         this.updateZoom(mouseX, mouseY, newZoom);
-        this.drawCanvas();
     }
 
     public onZoomOut(mouseX: number, mouseY: number, factor: number): void {
         const newLogZoom = Math.log(this.zoom) - factor;
         const newZoom = Math.exp(newLogZoom);
         this.updateZoom(mouseX, mouseY, newZoom);
-        this.drawCanvas();
     }
 
     private updateZoom(mouseX: number, mouseY: number, zoom: number): void {
@@ -234,23 +227,6 @@ export class View {
         this.left = this.x - this.halfWidth;
         this.bottom = this.y + this.halfHeight;
         this.right = this.x + this.halfWidth;
-    }
-
-    // CANVAS METHODS ===
-    // ==================
-
-    private drawCanvas() {
-        Updater.getInstance().add(() => {
-            this.canvas.clear();
-            this.makeGrid();
-            this.printInfos();
-
-            this.particules.forEach((particule: Particule) => {
-                particule.update();
-                particule.draw(this.canvas);
-            });
-
-        });
     }
 
     private updateSizesCanvas() {

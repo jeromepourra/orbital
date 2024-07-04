@@ -1,16 +1,34 @@
-import { Updater } from "./Updater.js";
+import { Canvas } from "./Canvas.js";
+import { FrameFrequency } from "./frame/FrameFrequency.js";
+import { FrameQueue } from "./frame/FrameQueue.js";
+import { Particule } from "./Particule.js";
 import { View } from "./View.js";
 
-Updater.getInstance().initialize();
+FrameQueue.getInstance().initialize();
 
-let viewElement = document.querySelector("#view") as HTMLDivElement;
-let view = new View(viewElement);
 let canMove = false;
+let viewElement = document.querySelector("#view") as HTMLDivElement;
+let rectView = viewElement.getBoundingClientRect();
+
+let canvas = new Canvas(viewElement.querySelector("canvas") as HTMLCanvasElement, rectView.width, rectView.height);
+
+let view = new View(0, 0, rectView.width, rectView.height, 1, canvas);
+
+let particules = [];
+for (let i = 0; i < 10; i++) {
+    particules.push(Particule.randomize(view, canvas));
+}
+
+view.addParticules(particules);
 
 // FOR TESTING
 viewElement.addEventListener("mousemove", function(event: MouseEvent) { 
-    let viewRect = view.getElementRect();
-    view.onMouseMove(event.clientX - viewRect.left, event.clientY - viewRect.top);
+    rectView = viewElement.getBoundingClientRect();
+    view.onMouseMove(event.clientX - rectView.left, event.clientY - rectView.top);
+});
+
+viewElement.addEventListener("click", function(event: MouseEvent) {
+    view.addParticule(Particule.randomize(view, canvas));
 });
 
 viewElement.addEventListener("mousedown", function(event: MouseEvent) {
@@ -18,8 +36,8 @@ viewElement.addEventListener("mousedown", function(event: MouseEvent) {
 });
 
 viewElement.addEventListener("wheel", function(event: WheelEvent) {
-    let viewRect = view.getElementRect();
-    view.onZoom(event.deltaY, event.clientX - viewRect.left, event.clientY - viewRect.top);
+    rectView = viewElement.getBoundingClientRect();
+    view.onZoom(event.deltaY, event.clientX - rectView.left, event.clientY - rectView.top);
 });
 
 window.addEventListener("mouseup", function(event: MouseEvent) {
@@ -35,5 +53,6 @@ window.addEventListener("mousemove", function(event: MouseEvent) {
 });
 
 window.addEventListener("resize", function(event: UIEvent) {
-    view.onResize();
+    rectView = viewElement.getBoundingClientRect();
+    view.onResize(rectView.width, rectView.height);
 });
