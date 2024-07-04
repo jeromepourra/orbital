@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./css/style.css">
+    <link rel="icon" href="./img/favicon.ico">
     <title>Orbital</title>
 </head>
 
@@ -31,6 +32,12 @@
                         <div class="middle">
                             <p id="area-left"></p>
                             <div id="square">
+                                <div class="arrow top">
+                                    <div id="square-width"></div>
+                                </div>
+                                <div class="arrow left">
+                                    <div id="square-height"></div>
+                                </div>
                                 <div class="center">
                                     <p id="point-width"></p>:<p id="point-height"></p>
                                 </div>

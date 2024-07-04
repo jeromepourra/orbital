@@ -155,3 +155,80 @@ footer p {
 p[id^="area-"] {
     text-align: center;
 }
+
+.arrow {
+    position: absolute;
+    background-color: black;
+    display: flex;
+}
+
+.arrow.top {
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 20px);
+    height: 1px;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.arrow.left {
+    top: 50%;
+    left: 5px;
+    transform: translateY(-50%);
+    width: 1px;
+    height: calc(100% - 20px);
+    flex-direction: column;
+    justify-content: center;
+}
+
+.arrow::before, .arrow::after {
+    content: '';
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.arrow.top::before, .arrow.top::after {
+    top: 50%;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-bottom: 3px solid black;
+}
+
+.arrow.left::before, .arrow.left::after {
+    left: 50%;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-bottom: 3px solid black;
+}
+
+.arrow.top::before {
+    left: 0;
+    transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.arrow.left::before {
+    top: 0;
+    transform: translate(-50%, -50%) rotate(0deg);
+}
+
+.arrow.top::after {
+    right: 0;
+    transform: translate(50%, -50%) rotate(90deg);
+}
+
+.arrow.left::after {
+    bottom: 0;
+    transform: translate(-50%, 50%) rotate(180deg);
+}
+
+#square-width {
+    margin-top: 5px;
+    line-height: 1;
+}
+
+#square-height {
+    margin-left: 5px;
+    line-height: 1;
+}

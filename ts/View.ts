@@ -91,8 +91,8 @@ export class View {
 
     public onMove(shiftX: number, shiftY: number): void {
 
-        let newX = this.x - shiftX;
-        let newY = this.y - shiftY;
+        let newX = this.x - shiftX / this.zoom;
+        let newY = this.y - shiftY / this.zoom;
 
         this.updateCenter(newX, newY);
         this.updateArea();
@@ -177,7 +177,6 @@ export class View {
         this.zoom = Math.max(View.ZOOM_MIN, Math.min(zoom, View.ZOOM_MAX));
         this.updateSizes();
         this.updateArea();
-        console.log("Zoom:", this.zoom, "\nSizes", Math.round(this.width), Math.round(this.height), "\nArea:", Math.round(this.top), Math.round(this.left), Math.round(this.bottom), Math.round(this.right));
         this.drawCanvas();
     }
 
@@ -211,8 +210,8 @@ export class View {
 
         const cellSize = View.INITIAL_GRID_CELL_SIZE * this.zoom;
         const halfCellSize = cellSize / 2;
-        const centerX = (this.widthBase / 2) - this.x;
-        const centerY = (this.heightBase / 2) - this.y;
+        const centerX = (this.halfWidth - this.x) * this.zoom;
+        const centerY = (this.halfHeight - this.y) * this.zoom;
 
         const textOptions: TCanvasTextOptions = {
             align: "center",
@@ -251,6 +250,9 @@ export class View {
 
         document.querySelector("#point-width").textContent = this.x.toFixed(0);
         document.querySelector("#point-height").textContent = this.y.toFixed(0);
+
+        document.querySelector("#square-width").textContent = this.width.toFixed(0);
+        document.querySelector("#square-height").textContent = this.height.toFixed(0);
 
     }
 
