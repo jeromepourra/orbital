@@ -18,6 +18,8 @@ export class View {
     private zoom: number;
     private widthBase: number;
     private heightBase: number;
+    private halfWidthBase: number;
+    private halfHeightBase: number;
     private width: number;
     private height: number;
     private halfWidth: number;
@@ -27,19 +29,23 @@ export class View {
     private bottom: number;
     private right: number;
     private element: HTMLDivElement;
+    private elementRect: DOMRect;
     private canvas: Canvas;
 
     constructor(element: HTMLDivElement, x?: number, y?: number, zoom?: number) {
 
-        let sizesElement = element.getBoundingClientRect();
+        this.element = element;
+        this.elementRect = element.getBoundingClientRect();
 
         this.x = x || View.INITIAL_X;
         this.y = y || View.INITIAL_Y;
         this.zoom = zoom || View.INITIAL_ZOOM;
-        this.widthBase = sizesElement.width;
-        this.heightBase = sizesElement.height;
-        this.width = this.widthBase * this.zoom;
-        this.height = this.heightBase * this.zoom;
+        this.widthBase = this.elementRect.width;
+        this.heightBase = this.elementRect.height;
+        this.halfWidthBase = this.widthBase / 2;
+        this.halfHeightBase = this.heightBase / 2;
+        this.width = this.widthBase / this.zoom;
+        this.height = this.heightBase / this.zoom;
         this.halfWidth = this.width / 2;
         this.halfHeight = this.height / 2;
 
@@ -53,19 +59,34 @@ export class View {
 
         this.drawCanvas();
 
-        console.log("Initialize", this);
+        // console.log("Initialize", this);
 
+    }
+
+    public getElementRect(): DOMRect {
+        return this.elementRect;
     }
 
     public drawCanvas() {
         Updater.getInstance().add(() => {
             this.canvas.clear();
             this.makeGrid();
+            this.printInfos();
         });
     }
 
     public updateSizesCanvas() {
         this.canvas.updateSizes(this.widthBase, this.heightBase);
+    }
+
+    public onMouseMove(mouseX: number, mouseY: number): void {
+
+        let shiftCenterX = mouseX - this.halfWidthBase;
+        let shiftCenterY = mouseY - this.halfHeightBase;
+
+        let shiftX = (shiftCenterX - this.x) / this.zoom;
+        let shiftY = (shiftCenterY - this.y) / this.zoom;
+        
     }
 
     public onMove(shiftX: number, shiftY: number): void {
@@ -77,35 +98,86 @@ export class View {
         this.updateArea();
         this.drawCanvas();
         // console.log("Move:", this);
+
     }
 
     public onResize(): void {
-        let sizesElement = this.element.getBoundingClientRect();
-        this.updateBaseSizes(sizesElement.width, sizesElement.height);
+
+        this.elementRect = this.element.getBoundingClientRect();
+        this.updateBaseSizes(this.elementRect.width, this.elementRect.height);
         this.updateSizes();
         this.updateArea();
         this.updateSizesCanvas();
         this.drawCanvas();
         // console.log("Resize", this);
+
     }
 
-    public onZoomIn(factor: number = View.ZOOM_FACTOR): void {
+    public onZoom(deltaY: number, mouseX: number, mouseY: number, factor: number = View.ZOOM_FACTOR): void {
+        if (deltaY > 0) {
+            this.onZoomOut(mouseX, mouseY, factor);
+        } else {
+            this.onZoomIn(mouseX, mouseY, factor);
+        }
+    }
+
+    public onZoomIn(mouseX: number, mouseY: number, factor: number): void {
+
         let newLogZoom = Math.log(this.zoom) + factor;
         let newZoom = Math.exp(newLogZoom);
-        this.updateZoom(Math.min(newZoom, View.ZOOM_MAX));
+
+        // let shiftCenterX = mouseX - this.halfWidthBase;
+        // let shiftCenterY = mouseY - this.halfHeightBase;
+
+        // let shiftX = (shiftCenterX - this.x) / this.zoom;
+        // let shiftY = (shiftCenterY - this.y) / this.zoom;
+
+        // console.log(shiftX, shiftY);
+
+        // ====================================================================
+        // La partie du dessus est good !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // ====================================================================
+        
+        // this.updateCenter(shiftX, shiftY);
+
+        // // Coordonnées du point par rapport auquel on veut zoomer (dans le système de coordonnées de la vue)
+        // let pointXInView = this.x;
+        // let pointYInView = this.y;
+
+        // console.log(pointXInView, pointYInView);
+
+
+        // // Appliquer le nouveau zoom
+        // this.zoom = newZoom;
+
+        // // // Mise à jour des dimensions de la vue basée sur le nouveau zoom
+        // // this.halfWidth *= newZoom / Math.exp(newLogZoom - factor);
+        // // this.halfHeight *= newZoom / Math.exp(newLogZoom - factor);
+
+        // // Calculer le déplacement nécessaire pour que le point sous le curseur reste inchangé
+        // let newPointXInView = pointXInView * newZoom / Math.exp(newLogZoom - factor);
+        // let newPointYInView = pointYInView * newZoom / Math.exp(newLogZoom - factor);
+
+        // // Mettre à jour la position de la vue pour appliquer le décalage
+        // this.x += pointXInView - newPointXInView;
+        // this.y += pointYInView - newPointYInView;
+
+        // Mise à jour de la vue ou d'autres éléments nécessaires
+        this.updateZoom(newZoom);
+
     }
 
-    public onZoomOut(factor: number = View.ZOOM_FACTOR): void {
+    public onZoomOut(mouseX: number, mouseY: number, factor: number): void {
         let newLogZoom = Math.log(this.zoom) - factor;
         let newZoom = Math.exp(newLogZoom);
-        this.updateZoom(Math.max(newZoom, View.ZOOM_MIN));
+        this.updateZoom(newZoom);
     }
 
     private updateZoom(zoom: number): void {
-        this.zoom = Math.max(0.1, zoom);
-        console.log("Zoom:", this.zoom, "Sizes:", this.width + ":" + this.height);
+        this.zoom = Math.max(View.ZOOM_MIN, Math.min(zoom, View.ZOOM_MAX));
         this.updateSizes();
         this.updateArea();
+        console.log("Zoom:", this.zoom, "\nSizes", Math.round(this.width), Math.round(this.height), "\nArea:", Math.round(this.top), Math.round(this.left), Math.round(this.bottom), Math.round(this.right));
         this.drawCanvas();
     }
 
@@ -117,20 +189,22 @@ export class View {
     private updateBaseSizes(width: number, height: number): void {
         this.widthBase = width;
         this.heightBase = height;
+        this.halfWidthBase = this.widthBase / 2;
+        this.halfHeightBase = this.heightBase / 2;
     }
 
     private updateSizes(): void {
-        this.width = this.widthBase * this.zoom;
-        this.height = this.heightBase * this.zoom;
+        this.width = this.widthBase / this.zoom;
+        this.height = this.heightBase / this.zoom;
         this.halfWidth = this.width / 2;
         this.halfHeight = this.height / 2;
     }
 
     private updateArea(): void {
-        this.top = this.y - this.halfHeight;
-        this.left = this.x - this.halfWidth;
-        this.bottom = this.y + this.halfHeight;
-        this.right = this.x + this.halfWidth;
+        this.top = -(this.halfHeight + this.y);
+        this.left = -(this.halfWidth + this.x);
+        this.bottom = this.halfHeight - this.y;
+        this.right = this.halfWidth - this.x;
     }
 
     private makeGrid(): void {
@@ -141,7 +215,8 @@ export class View {
         const centerY = (this.heightBase / 2) + this.y;
 
         const textOptions: TCanvasTextOptions = {
-            center: true,
+            align: "center",
+            baseline: "middle",
             fontSize: Math.floor(Math.min(14, cellSize / 2))
         };
 
@@ -162,6 +237,20 @@ export class View {
             this.canvas.drawLine(0, y, this.widthBase, y);
             this.canvas.drawText(Math.ceil((y - centerY) / cellSize).toString(), centerX, y + halfCellSize, textOptions);
         }
+
+    }
+
+    private printInfos(): void {
+
+        document.querySelector("#zoom").textContent = this.zoom.toFixed(3);
+
+        document.querySelector("#area-top").textContent = this.top.toFixed(0);
+        document.querySelector("#area-left").textContent = this.left.toFixed(0);
+        document.querySelector("#area-bottom").textContent = this.bottom.toFixed(0);
+        document.querySelector("#area-right").textContent = this.right.toFixed(0);
+
+        document.querySelector("#point-width").textContent = this.x.toFixed(0);
+        document.querySelector("#point-height").textContent = this.y.toFixed(0);
 
     }
 

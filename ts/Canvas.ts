@@ -2,7 +2,8 @@ export type TCanvasTextOptions = {
     fontSize?: number;
     fontFamily?: string;
     color?: string;
-    center?: boolean;
+    align?: 'left' | 'center' | 'right';
+    baseline?: 'top' | 'middle' | 'bottom';
 };
 
 export class Canvas {
@@ -54,12 +55,20 @@ export class Canvas {
     }
 
     public drawText(text: string, x: number, y: number, options?: TCanvasTextOptions): void {
+
+        this.context.textAlign = 'left';
+        this.context.textBaseline = 'top';
+        this.context.fillStyle = 'black';
+        this.context.font = '14px monospace';
         
         if (options) {
 
-            if (options.center) {
-                this.context.textAlign = 'center';
-                this.context.textBaseline = 'middle';
+            if (options.align) {
+                this.context.textAlign = options.align;
+            }
+
+            if (options.baseline) {
+                this.context.textBaseline = options.baseline;
             }
 
             if (options.fontFamily) {

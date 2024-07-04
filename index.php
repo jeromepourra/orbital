@@ -21,7 +21,25 @@
         </header>
         <main>
             <div id="view">
-                <canvas></canvas>
+                <canvas>
+                    Whoops! Your browser doesn't support HTML5 canvas.
+                </canvas>
+                <div id="infos">
+                    <p>Zoom: <span id="zoom"></span></p>
+                    <div id="area-container">
+                        <p id="area-top"></p>
+                        <div class="middle">
+                            <p id="area-left"></p>
+                            <div id="square">
+                                <div class="center">
+                                    <p id="point-width"></p>:<p id="point-height"></p>
+                                </div>
+                            </div>
+                            <p id="area-right"></p>
+                        </div>
+                        <p id="area-bottom"></p>
+                    </div>
+                </div>
             </div>
         </main>
         <footer>
