@@ -7,6 +7,12 @@ let viewElement = document.querySelector("#view") as HTMLDivElement;
 let view = new View(viewElement);
 let canMove = false;
 
+// FOR TESTING
+viewElement.addEventListener("mousemove", function(event: MouseEvent) { 
+    let viewRect = view.getElementRect();
+    view.onMouseMove(event.clientX - viewRect.left, event.clientY - viewRect.top);
+});
+
 viewElement.addEventListener("mousedown", function(event: MouseEvent) {
     canMove = true;
 });
