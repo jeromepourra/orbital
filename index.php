@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./css/style.css">
+    <link rel="icon" href="./img/favicon.ico">
     <title>Orbital</title>
 </head>
 
@@ -21,7 +22,31 @@
         </header>
         <main>
             <div id="view">
-                <canvas></canvas>
+                <canvas>
+                    Whoops! Your browser doesn't support HTML5 canvas.
+                </canvas>
+                <div id="infos">
+                    <p>Zoom: <span id="zoom"></span></p>
+                    <div id="area-container">
+                        <p id="area-top"></p>
+                        <div class="middle">
+                            <p id="area-left"></p>
+                            <div id="square">
+                                <div class="arrow top">
+                                    <div id="square-width"></div>
+                                </div>
+                                <div class="arrow left">
+                                    <div id="square-height"></div>
+                                </div>
+                                <div class="center">
+                                    <p id="point-width"></p>:<p id="point-height"></p>
+                                </div>
+                            </div>
+                            <p id="area-right"></p>
+                        </div>
+                        <p id="area-bottom"></p>
+                    </div>
+                </div>
             </div>
         </main>
         <footer>

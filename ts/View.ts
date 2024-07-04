@@ -18,6 +18,8 @@ export class View {
     private zoom: number;
     private widthBase: number;
     private heightBase: number;
+    private halfWidthBase: number;
+    private halfHeightBase: number;
     private width: number;
     private height: number;
     private halfWidth: number;
@@ -27,19 +29,23 @@ export class View {
     private bottom: number;
     private right: number;
     private element: HTMLDivElement;
+    private elementRect: DOMRect;
     private canvas: Canvas;
 
     constructor(element: HTMLDivElement, x?: number, y?: number, zoom?: number) {
 
-        let sizesElement = element.getBoundingClientRect();
+        this.element = element;
+        this.elementRect = element.getBoundingClientRect();
 
         this.x = x || View.INITIAL_X;
         this.y = y || View.INITIAL_Y;
         this.zoom = zoom || View.INITIAL_ZOOM;
-        this.widthBase = sizesElement.width;
-        this.heightBase = sizesElement.height;
-        this.width = this.widthBase * this.zoom;
-        this.height = this.heightBase * this.zoom;
+        this.widthBase = this.elementRect.width;
+        this.heightBase = this.elementRect.height;
+        this.halfWidthBase = this.widthBase / 2;
+        this.halfHeightBase = this.heightBase / 2;
+        this.width = this.widthBase / this.zoom;
+        this.height = this.heightBase / this.zoom;
         this.halfWidth = this.width / 2;
         this.halfHeight = this.height / 2;
 
@@ -53,14 +59,19 @@ export class View {
 
         this.drawCanvas();
 
-        console.log("Initialize", this);
+        // console.log("Initialize", this);
 
+    }
+
+    public getElementRect(): DOMRect {
+        return this.elementRect;
     }
 
     public drawCanvas() {
         Updater.getInstance().add(() => {
             this.canvas.clear();
             this.makeGrid();
+            this.printInfos();
         });
     }
 
@@ -68,45 +79,72 @@ export class View {
         this.canvas.updateSizes(this.widthBase, this.heightBase);
     }
 
+    public onMouseMove(mouseX: number, mouseY: number): void {
+        // This is a test method !
+    }
+
     public onMove(shiftX: number, shiftY: number): void {
 
-        let newX = this.x + shiftX;
-        let newY = this.y + shiftY;
+        let newX = this.x - shiftX / this.zoom;
+        let newY = this.y - shiftY / this.zoom;
 
         this.updateCenter(newX, newY);
         this.updateArea();
         this.drawCanvas();
         // console.log("Move:", this);
+
     }
 
     public onResize(): void {
-        let sizesElement = this.element.getBoundingClientRect();
-        this.updateBaseSizes(sizesElement.width, sizesElement.height);
+
+        this.elementRect = this.element.getBoundingClientRect();
+        this.updateBaseSizes(this.elementRect.width, this.elementRect.height);
         this.updateSizes();
         this.updateArea();
         this.updateSizesCanvas();
         this.drawCanvas();
         // console.log("Resize", this);
+
     }
 
-    public onZoomIn(factor: number = View.ZOOM_FACTOR): void {
+    public onZoom(deltaY: number, mouseX: number, mouseY: number, factor: number = View.ZOOM_FACTOR): void {
+        if (deltaY > 0) {
+            this.onZoomOut(mouseX, mouseY, factor);
+        } else {
+            this.onZoomIn(mouseX, mouseY, factor);
+        }
+    }
+
+    public onZoomIn(mouseX: number, mouseY: number, factor: number): void {
         let newLogZoom = Math.log(this.zoom) + factor;
         let newZoom = Math.exp(newLogZoom);
-        this.updateZoom(Math.min(newZoom, View.ZOOM_MAX));
+        this.updateZoom(mouseX, mouseY, newZoom);
+        this.drawCanvas();
     }
 
-    public onZoomOut(factor: number = View.ZOOM_FACTOR): void {
+    public onZoomOut(mouseX: number, mouseY: number, factor: number): void {
         let newLogZoom = Math.log(this.zoom) - factor;
         let newZoom = Math.exp(newLogZoom);
-        this.updateZoom(Math.max(newZoom, View.ZOOM_MIN));
+        this.updateZoom(mouseX, mouseY, newZoom);
+        this.drawCanvas();
     }
 
-    private updateZoom(zoom: number): void {
-        this.zoom = Math.max(0.1, zoom);
-        console.log("Zoom:", this.zoom, "Sizes:", this.width + ":" + this.height);
+    private updateZoom(mouseX: number, mouseY: number, zoom: number): void {
+
+        // Calculate the position of the mouse in the canvas before zoom
+        let preZoomX = mouseX / this.zoom - this.halfWidth + this.x;
+        let preZoomY = mouseY / this.zoom - this.halfHeight + this.y;
+
+        this.zoom = Math.max(View.ZOOM_MIN, Math.min(zoom, View.ZOOM_MAX));
         this.updateSizes();
         this.updateArea();
-        this.drawCanvas();
+
+        // Calculate the position of the mouse in the canvas after zoom
+        let postZoomX = mouseX / this.zoom - this.halfWidth;
+        let postZoomY = mouseY / this.zoom - this.halfHeight;
+
+        this.updateCenter(preZoomX - postZoomX, preZoomY - postZoomY);
+
     }
 
     private updateCenter(x: number, y: number): void {
@@ -117,11 +155,13 @@ export class View {
     private updateBaseSizes(width: number, height: number): void {
         this.widthBase = width;
         this.heightBase = height;
+        this.halfWidthBase = this.widthBase / 2;
+        this.halfHeightBase = this.heightBase / 2;
     }
 
     private updateSizes(): void {
-        this.width = this.widthBase * this.zoom;
-        this.height = this.heightBase * this.zoom;
+        this.width = this.widthBase / this.zoom;
+        this.height = this.heightBase / this.zoom;
         this.halfWidth = this.width / 2;
         this.halfHeight = this.height / 2;
     }
@@ -137,11 +177,12 @@ export class View {
 
         const cellSize = View.INITIAL_GRID_CELL_SIZE * this.zoom;
         const halfCellSize = cellSize / 2;
-        const centerX = (this.widthBase / 2) + this.x;
-        const centerY = (this.heightBase / 2) + this.y;
+        const centerX = (this.halfWidth - this.x) * this.zoom;
+        const centerY = (this.halfHeight - this.y) * this.zoom;
 
         const textOptions: TCanvasTextOptions = {
-            center: true,
+            align: "center",
+            baseline: "middle",
             fontSize: Math.floor(Math.min(14, cellSize / 2))
         };
 
@@ -162,6 +203,23 @@ export class View {
             this.canvas.drawLine(0, y, this.widthBase, y);
             this.canvas.drawText(Math.ceil((y - centerY) / cellSize).toString(), centerX, y + halfCellSize, textOptions);
         }
+
+    }
+
+    private printInfos(): void {
+
+        document.querySelector("#zoom").textContent = this.zoom.toFixed(3);
+
+        document.querySelector("#area-top").textContent = this.top.toFixed(0);
+        document.querySelector("#area-left").textContent = this.left.toFixed(0);
+        document.querySelector("#area-bottom").textContent = this.bottom.toFixed(0);
+        document.querySelector("#area-right").textContent = this.right.toFixed(0);
+
+        document.querySelector("#point-width").textContent = this.x.toFixed(0);
+        document.querySelector("#point-height").textContent = this.y.toFixed(0);
+
+        document.querySelector("#square-width").textContent = this.width.toFixed(0);
+        document.querySelector("#square-height").textContent = this.height.toFixed(0);
 
     }
 
